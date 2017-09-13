@@ -11,7 +11,7 @@
 	define(DIR, "/srv/punpun.xyz/uploads/");
 
 	// The seekrit key.
-	define(KEY, "grape");
+	define(KEY, "seekrit");
 
 
 	//
@@ -32,11 +32,11 @@
 	}
 
 	// check_method checks if the request is a POST request, and the
-	// desired output. This function can return "none", "plain" or
+	// desired output. This function can return FALSE, "plain" or
 	// "html".
 	function check_method() {
 		if ($_SERVER["REQUEST_METHOD"] != "POST") {
-			return "none";
+			return FALSE;
 		}
 
 		// Check if we shoud return pretty html output or plain output
@@ -75,7 +75,7 @@
 	//
 
 	$method = check_method();
-	if ($method == "none") {
+	if (!$method) {
 		exit();
 	}
 
