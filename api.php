@@ -1,106 +1,98 @@
 <?php
-	//
-	// Configuration.
-	//
 
-	// The root URL, be sure to add a trailing slash.
-	define(URL, "https://punpun.xyz/");
+//
+// Configuration.
+//
 
-	// The directory where uploaded files should be stored, be sure to
-	// add a trailing slash.
-	define(DIR, "/srv/punpun.xyz/uploads/");
+// The root URL, be sure to add a trailing slash.
+define(URL, "https://punpun.xyz/");
 
-	// The seekrit key.
-	define(KEY, "seekrit");
+// The directory where uploaded files should be stored, be sure to add
+// a trailing slash.
+define(DIR, "/srv/punpun.xyz/uploads/");
+
+// The seekrit key.
+define(KEY, "seekrit");
 
 
-	//
-	// Functions.
-	//
+//
+// Functions.
+//
 
-	// random_string generates a random string of a given lenght.
-	function random_string() {
-		$chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
+// random_string generates a random string of a given lenght.
+function random_string($lenght) {
+	$chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 
-		$string = "";
-		for ($i = 0; $i < 4; $i++) {
-			// TODO: Should I use -1 here?
-			$string .= $chars[rand(0, strlen($chars))];
-		}
-
-		return $string;
+	$string = "";
+	for ($i = 0; $i < $lenght; $i++) {
+		$string .= $chars[rand(0, strlen($chars)-1)];
 	}
 
-	// check_method checks if the request is a POST request, and the
-	// desired output. This function can return FALSE, "plain" or
-	// "html".
-	function check_method() {
-		if ($_SERVER["REQUEST_METHOD"] != "POST") {
-			return FALSE;
-		}
+	return $string;
+}
 
-		// Check if we shoud return pretty html output or plain output
-		// (for something like cURL).
-		return isset($_GET["output"]) ? $_GET["output"] : "plain";
+// check_method checks if the request is a POST request, and the
+// desired output. This function can return FALSE, "plain" or "html".
+function check_method() {
+	if ($_SERVER["REQUEST_METHOD"] != "POST") {
+		return FALSE;
 	}
 
-	// upload_files uploads files and returns a list with URLs of the
-	// uploaded files.
-	function upload_files() {
-		$urls = [];
+	// Check if we shoud return pretty html output or plain output
+	// (for something like cURL).
+	return isset($_GET["output"]) ? $_GET["output"] : "plain";
+}
 
-		foreach ($_FILES["files"]["error"] as $key => $error) {
-			if ($error == UPLOAD_ERR_OK) {
-				$orig_name = $_FILES["files"]["name"][$key];
-				$temp_name = $_FILES["files"]["tmp_name"][$key];
+// upload_files uploads files and returns a list with URLs of the
+// uploaded files.
+function upload_files() {
+	$urls = [];
 
-				// Generate a non-existing random new name.
-				while (file_exists(DIR . $new_name)) {
-					$new_name = random_string() . "." . end((explode(
-						".", $orig_name)));
-				}
+	foreach ($_FILES["files"]["error"] as $key => $error) {
+		if ($error == UPLOAD_ERR_OK) {
+			$orig_name = $_FILES["files"]["name"][$key];
+			$temp_name = $_FILES["files"]["tmp_name"][$key];
 
-				if (move_uploaded_file($temp_name, DIR . $new_name)) {
-					$urls[] = URL . $new_name;
-				}
+			// Generate a non-existing random new name.
+			while (file_exists(DIR . $new_name)) {
+				$new_name = random_string(4) . "." . end((explode(".",
+					$orig_name)));
+			}
+
+			if (move_uploaded_file($temp_name, DIR . $new_name)) {
+				$urls[] = URL . $new_name;
 			}
 		}
-
-		return $urls;
 	}
 
+	return $urls;
+}
 
-	//
-	// Main.
-	//
 
-	$method = check_method();
-	if (!$method) {
-		exit();
-	}
+//
+// Main.
+//
 
-	if ($method == "html") {
-		include "header.html";
-	}
+$valid_key = $_POST["key"] == KEY;
 
-	// Validate key.
-	if ($_POST["key"] != KEY) {
-		if ($method == "html") {
-			exit("<h3>Invalid key!</h3>\n");
-		} else {
-			exit("Invalid key!\n");
+$method = check_method();
+if ($method == "html") {
+	include "header.html";
+	if ($valid_key) {
+		foreach (upload_files() as $url) {
+			echo "			<li><a href=\"" . $url .
+				"\">$url</a></li>\n";
 		}
+	} else {
+		echo "<h3>Invalid key!</h3>\n";
 	}
-
-	foreach (upload_files() as $url) {
-		if ($method == "html") {
-			echo "			<li><a href=\"$url\">$url</a></li>\n";
-		} else {
-			echo "$url\n";
+	include "footer.html";
+} elseif ($method == "plain") {
+	if ($valid_key) {
+		foreach (upload_files() as $url) {
+			echo $url . "\n";
 		}
+	} else {
+		echo "Invalid key!\n";
 	}
-
-	if ($method == "html") {
-		include "footer.html";
-	}
-?>
+}
