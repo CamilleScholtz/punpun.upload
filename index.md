@@ -28,11 +28,13 @@ set f '/path/to/file'
 set i 'DarkLord66'
 set k 'seekrit'
 
-# Upload files
-curl -F files[]="@$f" -F id="$i" -F key="$k" \
+# Upload files.
+curl -F "files[]=@$f" -F "id=$i" -F "key=$k" \
 	https://punpun.xyz/upload/api.php
 
-# View list of uploaded files
+# View a list of all uploaded files.
+curl -F "view=" -F id="$i" -F key="$k" \
+	https://punpun.xyz/upload/api.php
 ```
 
 Alternativly, use [punf](https://github.com/onodera-punpun/punf).

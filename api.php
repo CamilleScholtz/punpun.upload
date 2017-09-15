@@ -11,12 +11,16 @@ define(URL, "https://punpun.xyz/");
 // a trailing slash.
 define(DIR, "/srv/punpun.xyz/uploads/");
 
-// IDs and their respective keys.
-// TODO: I actually want to define() this as well for consistency.
+// IDs and their respective keys. When you add a new ID make sure to
+// add the directory to the Caddy config, and to make the user and
+// group "www".
+// TODO: I actually want to define() this as well to be consistent.
 $IDS = [
 	"id1" => "pass",
 	"id2" => "pass",
+	"id3" => "pass",
 ];
+
 
 //
 // Functions.
@@ -35,12 +39,12 @@ function check_format() {
 	return isset($_GET["output"]) ? $_GET["output"] : "plain";
 }
 
-// random_string generates a random string of a given lenght.
-function random_string($lenght) {
+// random_string generates a random string of a given length.
+function random_string($length) {
 	$chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 
 	$string = "";
-	for ($i = 0; $i < $lenght; $i++) {
+	for ($i = 0; $i < $length; $i++) {
 		$string .= $chars[rand(0, strlen($chars)-1)];
 	}
 
@@ -69,12 +73,12 @@ function view_files() {
 	$urls = [];
 
 	foreach (scandir(DIR . $_POST["id"]) as $file) {
-		// Exclude hidden files.
-		if ($file[0] == '.') {
+		if (!is_file(DIR . $_POST["id"] . "/" . $file)) {
 			continue;
 		}
 
-		$urls[$file] = filemtime(DIR . $_POST["id"] . "/" . $file);
+		$urls[URL . $file] = filemtime(DIR . $_POST["id"] . "/" .
+			$file);
 	}
 
 	asort($urls);
@@ -120,7 +124,7 @@ if ($format == "html") {
 
 		foreach ($urls as $url) {
 			echo "			<li><a href=\"" . $url .
-				"\">$url</a></li>\n";
+				"\">" . $url . "</a></li>\n";
 		}
 	} else {
 		echo "<h3>Invalid ID or key!</h3>\n";
